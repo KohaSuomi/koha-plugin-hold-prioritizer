@@ -7,6 +7,7 @@ use Koha::Database;
 use Koha::Holds;
 use Koha::Items;
 use Koha::Libraries;
+use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger;
 use Koha::Patrons;
 
 use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Config;
@@ -33,7 +34,10 @@ sub prioritize_hold_for_item {
     my $skips    = Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($plugin);
 
     my $s = $config->settings();
-    return undef if !$s->{mode} || $s->{mode} eq 'None';
+    if ( !$s->{mode} || $s->{mode} eq 'None' ) {
+        return undef;
+    }
+    Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: prioritize item " . $item->itemnumber . " mode=" . $s->{mode});
 
     foreach my $r (@$reserves) {
         if ( $r->{found} && $r->{found} =~ /^[WPT]$/ ) {
@@ -45,7 +49,10 @@ sub prioritize_hold_for_item {
     return undef unless @active;
 
     my $available_count = $matching->available_items_count( $item->biblionumber );
-    return undef unless $matching->gating_active( $s, $available_count, scalar @active );
+    unless ( $matching->gating_active( $s, $available_count, scalar @active ) ) {
+        Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: gating inactive for biblio " . $item->biblionumber . " (available=$available_count, holds=" . scalar(@active) . ")");
+        return undef;
+    }
 
     my @window;
     if ( $s->{max_holds} && $s->{max_holds} =~ /\d/ && int( $s->{max_holds} ) != 0 ) {
@@ -111,13 +118,16 @@ sub prioritize_hold_for_item {
         next unless ( $fm || $mt );
 
         if ($fm) {
+            Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: item " . $item->itemnumber . " -> reserve $r->{reserve_id} (fulfillment skip)");
             return $r;
         }
         if ( $mt eq 'local' ) {
+            Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: item " . $item->itemnumber . " -> reserve $r->{reserve_id} (local match)");
             return $r;
         }
         if ( $mt eq 'group' ) {
             if ( $s->{mode} eq 'GiveLibraryGroup' ) {
+                Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: item " . $item->itemnumber . " -> reserve $r->{reserve_id} (group match)");
                 return $r;
             }
             if ( $s->{mode} eq 'GiveLibraryAndGroup' && !$group_claimed ) {
@@ -148,7 +158,10 @@ sub prioritize_holds_queue {
 
     my $available_count = $items ? scalar @$items : 0;
     my $hold_count      = scalar @$holds;
-    return undef unless $matching->gating_active( $s, $available_count, $hold_count );
+    unless ( $matching->gating_active( $s, $available_count, $hold_count ) ) {
+        Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: queue gating inactive (holds=$hold_count, available=$available_count)");
+        return undef;
+    }
 
     my @window;
     if ( $s->{max_holds} && $s->{max_holds} =~ /\d/ && int( $s->{max_holds} ) != 0 ) {
@@ -209,6 +222,7 @@ sub prioritize_holds_queue {
     my @promoted = grep { $promotable{ $_->{reserve_id} } } @$holds;
     my @rest     = grep { !$promotable{ $_->{reserve_id} } } @$holds;
     return undef unless @promoted;
+    Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: queue promoted " . scalar(@promoted) . " hold(s)");
     return [ @promoted, @rest ];
 }
 
@@ -286,6 +300,7 @@ sub after_hold_action {
         next if $fm;
 
         $skips->increment_skips( $res->{reserve_id}, $cap );
+        Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($plugin, "HoldPrioritizer: incremented skip for reserve $res->{reserve_id} (cap=$cap)");
     }
 }
 

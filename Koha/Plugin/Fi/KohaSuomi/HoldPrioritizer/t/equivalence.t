@@ -123,7 +123,7 @@ subtest 'plugin matches core LocalHoldsPriority (GiveLibraryAndGroup)' => sub {
     my $library2 = $builder->build( { source => 'Branch' } );
 
     # Same hold group for both libraries.
-    my $group = Koha::Library::Group->new( { title => 'Test hold group', ft_local_hold_group => '1' } )->store();
+    my $group = Koha::Library::Group->new( { title => 'Test hold group ' . int(rand(100000)), ft_local_hold_group => '1' } )->store();
     Koha::Library::Group->new( { parent_id => $group->id, branchcode => $library1->{branchcode} } )->store();
     Koha::Library::Group->new( { parent_id => $group->id, branchcode => $library2->{branchcode} } )->store();
 

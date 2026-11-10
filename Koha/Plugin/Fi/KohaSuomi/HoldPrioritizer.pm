@@ -4,6 +4,7 @@ use Modern::Perl;
 use base qw(Koha::Plugins::Base);
 
 use C4::Context;
+use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger;
 use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Config;
 use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips;
 use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Prioritizer;
@@ -75,8 +76,10 @@ sub configure {
 
         if ( $cgi->param('TakeOverCoreLocalHoldsPriority') ) {
             eval { C4::Context->set_preference( 'LocalHoldsPriority', 'None' ); };
+            Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($self, "HoldPrioritizer: took over core LocalHoldsPriority (set to None)");
         }
 
+        Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Logger::log($self, "HoldPrioritizer: configuration saved");
         $saved = 1;
     }
 
