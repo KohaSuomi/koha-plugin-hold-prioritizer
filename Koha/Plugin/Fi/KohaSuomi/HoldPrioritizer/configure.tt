@@ -1,0 +1,104 @@
+[% USE raw %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha: HoldPrioritizer: Configuration</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body id="plugins_holdprioritizer_configure" class="plugins">
+[% WRAPPER 'header.inc' %]
+    [% INCLUDE 'prefs-admin-search.inc' %]
+[% END %]
+
+<div id="breadcrumbs">
+    <a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo;
+    <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo;
+    HoldPrioritizer &rsaquo; Configuration
+</div>
+
+<div class="main container-fluid">
+    <div class="row">
+        <div class="col-12 col-xl-10">
+            <main>
+                [% INCLUDE 'messages.inc' %]
+
+                <h1>HoldPrioritizer Configuration</h1>
+
+                [% IF saved %]
+                    <div class="alert alert-success">Configuration saved.</div>
+                [% END %]
+
+                [% FOREACH message IN messages %]
+                    <div class="alert alert-[% message.alert_class | html %]">[% message.text | html %]</div>
+                [% END %]
+
+                <form method="post" class="page-section">
+                    <input type="hidden" name="class" value="[% CLASS | html %]" />
+                    <input type="hidden" name="method" value="[% METHOD | html %]" />
+                    <input type="hidden" name="save" value="1" />
+                    [% INCLUDE 'csrf-token.inc' %]
+
+                    <fieldset class="rows">
+                        <legend>Local holds priority</legend>
+                        <ol>
+                            <li>
+                                <label for="LocalHoldsPriority">Mode: </label>
+                                <select name="LocalHoldsPriority" id="LocalHoldsPriority">
+                                    <option value="None" [% IF LocalHoldsPriority == 'None' %]selected[% END %]>None</option>
+                                    <option value="GiveLibrary" [% IF LocalHoldsPriority == 'GiveLibrary' %]selected[% END %]>GiveLibrary</option>
+                                    <option value="GiveLibraryAndGroup" [% IF LocalHoldsPriority == 'GiveLibraryAndGroup' %]selected[% END %]>GiveLibraryAndGroup</option>
+                                    <option value="GiveLibraryGroup" [% IF LocalHoldsPriority == 'GiveLibraryGroup' %]selected[% END %]>GiveLibraryGroup</option>
+                                </select>
+                                <div class="hint">Choose how local holds are prioritised.</div>
+                            </li>
+                            <li>
+                                <label for="LocalHoldsPriorityPatronControl">Patron control: </label>
+                                <select name="LocalHoldsPriorityPatronControl" id="LocalHoldsPriorityPatronControl">
+                                    <option value="PickupLibrary" [% IF LocalHoldsPriorityPatronControl == 'PickupLibrary' %]selected[% END %]>PickupLibrary</option>
+                                    <option value="HomeLibrary" [% IF LocalHoldsPriorityPatronControl == 'HomeLibrary' %]selected[% END %]>HomeLibrary</option>
+                                </select>
+                            </li>
+                            <li>
+                                <label for="LocalHoldsPriorityItemControl">Item control: </label>
+                                <select name="LocalHoldsPriorityItemControl" id="LocalHoldsPriorityItemControl">
+                                    <option value="homebranch" [% IF LocalHoldsPriorityItemControl == 'homebranch' %]selected[% END %]>homebranch</option>
+                                    <option value="holdingbranch" [% IF LocalHoldsPriorityItemControl == 'holdingbranch' %]selected[% END %]>holdingbranch</option>
+                                </select>
+                            </li>
+                            <li>
+                                <label for="LocalHoldsPriorityMaxHolds">Max holds: </label>
+                                <input type="text" name="LocalHoldsPriorityMaxHolds" id="LocalHoldsPriorityMaxHolds" value="[% LocalHoldsPriorityMaxHolds | html %]" />
+                                <div class="hint">Only the first N active holds are considered (0 = no limit).</div>
+                            </li>
+                            <li>
+                                <label for="LocalHoldsPriorityMinItems">Min items: </label>
+                                <input type="text" name="LocalHoldsPriorityMinItems" id="LocalHoldsPriorityMinItems" value="[% LocalHoldsPriorityMinItems | html %]" />
+                                <div class="hint">Prioritise only when at least this many items are available (0 = inactive).</div>
+                            </li>
+                            <li>
+                                <label for="LocalHoldsPriorityHoldsPerItemThreshold">Holds per item threshold: </label>
+                                <input type="text" name="LocalHoldsPriorityHoldsPerItemThreshold" id="LocalHoldsPriorityHoldsPerItemThreshold" value="[% LocalHoldsPriorityHoldsPerItemThreshold | html %]" />
+                                <div class="hint">Prioritise only when holds/available items is at or below this value (0 = inactive).</div>
+                            </li>
+                            <li>
+                                <label for="LocalHoldsPriorityFulfillmentSkips">Fulfillment skips: </label>
+                                <input type="text" name="LocalHoldsPriorityFulfillmentSkips" id="LocalHoldsPriorityFulfillmentSkips" value="[% LocalHoldsPriorityFulfillmentSkips | html %]" />
+                                <div class="hint">A hold can be skipped this many times before it is fulfilled (0 = inactive).</div>
+                            </li>
+                            <li>
+                                <label for="TakeOverCoreLocalHoldsPriority">Take over core LocalHoldsPriority: </label>
+                                <input type="checkbox" name="TakeOverCoreLocalHoldsPriority" id="TakeOverCoreLocalHoldsPriority" value="1" [% IF TakeOverCoreLocalHoldsPriority %]checked="checked"[% END %] />
+                                <div class="hint">When checked, core LocalHoldsPriority is set to None and this plugin becomes the prioritiser.</div>
+                            </li>
+                        </ol>
+                    </fieldset>
+
+                    <fieldset class="action">
+                        <input type="submit" class="btn btn-primary" value="Save configuration" />
+                        <a class="btn btn-default" href="/cgi-bin/koha/plugins/plugins-home.pl">Cancel</a>
+                    </fieldset>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+[% INCLUDE 'intranet-bottom.inc' %]

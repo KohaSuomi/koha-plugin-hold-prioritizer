@@ -1,71 +1,113 @@
 package Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer;
 
-## It's good practice to use Modern::Perl
 use Modern::Perl;
-
-## Required for all plugins
 use base qw(Koha::Plugins::Base);
-## We will also need to include any Koha libraries we want to access
+
 use C4::Context;
+use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Config;
+use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips;
+use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Prioritizer;
 use utf8;
 
-## Here we set our plugin version
-our $VERSION = "1.0.0";
+our $VERSION = "1.1.0";
 
-## Here is our metadata, some keys are required, some are optional
 our $metadata = {
     name            => 'HoldPrioritizer',
     author          => 'Johanna Räisä',
     date_authored   => '2026-10-27',
-    date_updated    => '2026-10-27',
+    date_updated    => '2026-11-10',
     minimum_version => '26.05',
     maximum_version => '',
     version         => $VERSION,
-    description     => 'Tool for prioritizing holds',
+    description     => 'Tool for prioritizing holds (plugin-based, KohaSuomi #1563)',
 };
 
-## This is the minimum code required for a plugin's 'new' method
-## More can be added, but none should be removed
 sub new {
     my ( $class, $args ) = @_;
-
-    ## We need to add our metadata here so our base class can access it
     $args->{'metadata'} = $metadata;
     $args->{'metadata'}->{'class'} = $class;
-
-    ## Here, we call the 'new' method for our base class
-    ## This runs some additional magic and checking
-    ## and returns our actual 
     my $self = $class->SUPER::new($args);
-
     return $self;
 }
-## This is the 'install' method. Any database tables or other setup that should
-## be done when the plugin if first installed should be executed in this method.
-## The installation method should always return true if the installation succeeded
-## or false if it failed.
-sub install() {
-    my ( $self, $args ) = @_;
 
+sub engine { return shift->{engine}; }
+
+sub install {
+    my ( $self, $args ) = @_;
+    Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->ensure_table();
     return 1;
 }
 
-## This is the 'upgrade' method. It will be triggered when a newer version of a
-## plugin is installed over an existing older version of a plugin
 sub upgrade {
     my ( $self, $args ) = @_;
-
+    Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->ensure_table();
     return 1;
 }
 
-## This method will be run just before the plugin files are deleted
-## when a plugin is uninstalled. It is good practice to clean up
-## after ourselves!
-sub uninstall() {
+sub uninstall {
     my ( $self, $args ) = @_;
-
+    my $dbh = C4::Context->dbh;
+    my $table = Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->table();
+    eval { $dbh->do("DROP TABLE IF EXISTS $table"); };
     return 1;
+}
+
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    my $saved    = 0;
+    my @messages;
+
+    if ( $cgi->param('save') ) {
+        $self->store_data(
+            {
+                LocalHoldsPriority                    => scalar $cgi->param('LocalHoldsPriority'),
+                LocalHoldsPriorityPatronControl      => scalar $cgi->param('LocalHoldsPriorityPatronControl'),
+                LocalHoldsPriorityItemControl        => scalar $cgi->param('LocalHoldsPriorityItemControl'),
+                LocalHoldsPriorityMaxHolds           => scalar $cgi->param('LocalHoldsPriorityMaxHolds'),
+                LocalHoldsPriorityMinItems           => scalar $cgi->param('LocalHoldsPriorityMinItems'),
+                LocalHoldsPriorityHoldsPerItemThreshold => scalar $cgi->param('LocalHoldsPriorityHoldsPerItemThreshold'),
+                LocalHoldsPriorityFulfillmentSkips   => scalar $cgi->param('LocalHoldsPriorityFulfillmentSkips'),
+                TakeOverCoreLocalHoldsPriority       => scalar $cgi->param('TakeOverCoreLocalHoldsPriority') ? 1 : 0,
+            }
+        );
+
+        if ( $cgi->param('TakeOverCoreLocalHoldsPriority') ) {
+            eval { C4::Context->set_preference( 'LocalHoldsPriority', 'None' ); };
+        }
+
+        $saved = 1;
+    }
+
+    my $template = $self->get_template({ file => 'configure.tt' });
+
+    my $config = Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Config->new($self);
+    my $s = $config->settings();
+    $template->param(
+        saved                               => $saved,
+        messages                            => \@messages,
+        LocalHoldsPriority                  => $s->{mode},
+        LocalHoldsPriorityPatronControl      => $s->{patron},
+        LocalHoldsPriorityItemControl        => $s->{item},
+        LocalHoldsPriorityMaxHolds           => $s->{max_holds},
+        LocalHoldsPriorityMinItems           => $s->{min_items},
+        LocalHoldsPriorityHoldsPerItemThreshold => $s->{threshold},
+        LocalHoldsPriorityFulfillmentSkips   => $s->{skips_cap},
+        TakeOverCoreLocalHoldsPriority       => $s->{takeover},
+    );
+
+    $self->output_html( $template->output() );
+}
+
+# Hooks delegated to the Prioritizer module.
+sub prioritize_hold_for_item { Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Prioritizer->new(shift)->prioritize_hold_for_item(@_); }
+sub prioritize_holds_queue   { Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Prioritizer->new(shift)->prioritize_holds_queue(@_); }
+sub after_hold_action        { Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Prioritizer->new(shift)->after_hold_action(@_); }
+
+sub api_routes {
+    my ( $self, $args ) = @_;
+    return $self->SUPER::api_routes($args);
 }
 
 1;
-
