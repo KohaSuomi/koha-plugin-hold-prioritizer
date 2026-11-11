@@ -28,7 +28,30 @@ sub new {
     $args->{'metadata'} = $metadata;
     $args->{'metadata'}->{'class'} = $class;
     my $self = $class->SUPER::new($args);
+
+    my ( $name, $description ) = $self->get_localized_metadata();
+    $self->{metadata}->{name} = $name;
+    $self->{metadata}->{description} = $description;
+
     return $self;
+}
+
+sub get_localized_metadata {
+    my ($self) = @_;
+    my $lang = C4::Languages::getlanguage() || 'en';
+    my ( $name, $description );
+
+    if ( $lang eq 'sv-SE' ) {
+        $name        = 'Prioritera reservationer';
+        $description = 'Verktyg för att prioritera reservationer (plugin-baserat, KohaSuomi #1563)';
+    } elsif ( $lang eq 'fi-FI' ) {
+        $name        = 'Varausten priorisointi';
+        $description = 'Työkalu varausten priorisointiin (liitännäispohjainen, KohaSuomi #1563)';
+    } else {
+        $name        = 'HoldPrioritizer';
+        $description = 'Tool for prioritizing holds (plugin-based, KohaSuomi #1563)';
+    }
+    return ( $name, $description );
 }
 
 sub engine { return shift->{engine}; }
