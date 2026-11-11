@@ -1,10 +1,10 @@
 [%
     T = {
-        configure_1                                = "Koha: HoldPrioritizer: Inställningar",
+        configure_1                                = "Koha: Prioritera reservationer: Inställningar",
         configure_2                                = "Hem",
         configure_3                                = "Plugins",
-        configure_4                                = "HoldPrioritizer &rsaquo; Inställningar",
-        configure_5                                = "HoldPrioritizer-inställningar",
+        configure_4                                = "Prioritera reservationer &rsaquo; Inställningar",
+        configure_5                                = "Prioritera reservationer &ndash; inställningar",
         configure_6                                = "Inställningarna har sparats.",
         configure_7                                = "Prioritet för lokala reservationer",
         configure_8                                = "Läge:",

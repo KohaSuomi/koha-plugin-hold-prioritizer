@@ -1,10 +1,10 @@
 [%
     T = {
-        configure_1                                = "Koha: HoldPrioritizer: Asetukset",
+        configure_1                                = "Koha: Varausten priorisointi: Asetukset",
         configure_2                                = "Etusivu",
         configure_3                                = "Liitännäiset",
-        configure_4                                = "HoldPrioritizer &rsaquo; Asetukset",
-        configure_5                                = "HoldPrioritizer-asetukset",
+        configure_4                                = "Varausten priorisointi &rsaquo; Asetukset",
+        configure_5                                = "Varausten priorisointi &ndash; asetukset",
         configure_6                                = "Asetukset tallennettu.",
         configure_7                                = "Paikallisten varausten prioriteetti",
         configure_8                                = "Tila:",
