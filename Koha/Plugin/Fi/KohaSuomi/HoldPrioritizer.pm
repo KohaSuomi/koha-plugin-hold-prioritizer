@@ -10,13 +10,13 @@ use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips;
 use Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Prioritizer;
 use utf8;
 
-our $VERSION = "1.1.0";
+our $VERSION = "1.1.2";
 
 our $metadata = {
     name            => 'HoldPrioritizer',
     author          => 'Johanna Räisä',
     date_authored   => '2026-10-27',
-    date_updated    => '2026-11-10',
+    date_updated    => '2026-11-11',
     minimum_version => '26.05',
     maximum_version => '',
     version         => $VERSION,
@@ -59,12 +59,14 @@ sub engine { return shift->{engine}; }
 sub install {
     my ( $self, $args ) = @_;
     Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->ensure_table();
+    Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->drop_legacy_fulfillment_skips();
     return 1;
 }
 
 sub upgrade {
     my ( $self, $args ) = @_;
     Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->ensure_table();
+    Koha::Plugin::Fi::KohaSuomi::HoldPrioritizer::Modules::Skips->new($self)->drop_legacy_fulfillment_skips();
     return 1;
 }
 

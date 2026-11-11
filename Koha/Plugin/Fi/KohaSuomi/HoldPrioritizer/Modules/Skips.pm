@@ -39,6 +39,34 @@ sub ensure_table {
     }
 }
 
+# Drop database objects that belonged to the old core implementation of
+# local holds priority, now handled by this plugin (KohaSuomi #1563).
+# Mirrors sql/drop_fulfillment_skips.sql and is safe to run repeatedly.
+sub drop_legacy_fulfillment_skips {
+    my ($self) = @_;
+    my $dbh = C4::Context->dbh;
+    for my $table (qw(reserves old_reserves)) {
+        eval { $dbh->do("ALTER TABLE $table DROP COLUMN IF EXISTS fulfillment_skips"); };
+    }
+    # Old system preferences superseded by the plugin's own settings.
+    for my $pref (
+        'LocalHoldsPriorityFulfillmentSkips',
+        'LocalHoldsPriorityHoldsPerItemThreshold',
+        'LocalHoldsPriorityItemsAgainstHoldsRatio',
+        'LocalHoldsPriorityMaxHolds',
+        'LocalHoldsPriorityMinItems',
+    ) {
+        eval { $dbh->do("DELETE FROM systempreferences WHERE variable = ?", undef, $pref); };
+    }
+    return 1;
+}
+
+# Backwards/alternative names for the same cleanup, kept for callers that may
+# use a different naming convention.
+sub drop_old_db_changes        { shift->drop_legacy_fulfillment_skips(@_); }
+sub cleanup_legacy             { shift->drop_legacy_fulfillment_skips(@_); }
+sub drop_fulfillment_skips     { shift->drop_legacy_fulfillment_skips(@_); }
+
 sub get_skips {
     my ( $self, $reserve_id ) = @_;
     $self->ensure_table();

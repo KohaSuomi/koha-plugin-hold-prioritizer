@@ -101,8 +101,11 @@ save. The plugin takes over core `LocalHoldsPriority` when the checkbox is set.
 
 ## Database cleanup
 
-If you previously used the branch's `fulfillment_skips` column on `reserves` /
-`old_reserves`, you can drop it with `sql/drop_fulfillment_skips.sql`.
+The plugin drops the legacy `fulfillment_skips` column from `reserves` /
+`old_reserves` and removes the `LocalHoldsPriorityFulfillmentSkips` system
+preference automatically when it is installed or upgraded. The manual script
+`sql/drop_fulfillment_skips.sql` is still provided for sites that want to run
+the cleanup by hand.
 
 ## Testing
 
