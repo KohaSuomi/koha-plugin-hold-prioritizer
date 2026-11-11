@@ -10,7 +10,7 @@ It requires a small core patch (two plugin hooks) in Koha:
 - `prioritize_holds_queue` in `C4::HoldsQueue::MapItemsToHoldRequests`
 
 The patch is ~32 lines and lives on the branch
-`ks26dev/ks-0274-KOHA-1563-hold-prioritizer-plugin`.
+https://github.com/KohaSuomi/Koha-26x/tree/ksdev/ks-0274-KOHA-1563-hold-prioritizer-plugin
 
 ## How it works
 
